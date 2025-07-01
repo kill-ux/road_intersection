@@ -1,4 +1,7 @@
-use std::thread;
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
 
 use ::rand::*;
 // use macroquad::prelude::*;
@@ -26,10 +29,41 @@ async fn main() {
     let height = screen_width();
     let instans_car = vec![
         Car::new(KeyCode::Up, (width / 2., height)),
-        Car::new(KeyCode::Down, ((width / 2.) - 50., -40.0)),
+        Car::new(KeyCode::Down, ((width / 2.) - 50., -50.0)),
         Car::new(KeyCode::Left, (height, (width / 2.) - 50.)),
-        Car::new(KeyCode::Right, (-40., width / 2.)),
+        Car::new(KeyCode::Right, (-50., width / 2.)),
     ];
+
+    let lights = [
+        Lights {
+            pos: (450., 450.),
+            color: RED,
+        },
+        Lights {
+            pos: (300., 300.),
+            color: RED,
+        },
+        Lights {
+            pos: (300., 450.),
+            color: RED,
+        },
+        Lights {
+            pos: (450., 300.),
+            color: RED,
+        },
+    ];
+
+    let mut stack_down: Option<Car> = None;
+    let mut stack_up: Option<Car> = None;
+    let mut stack_left: Option<Car> = None;
+    let mut stack_right: Option<Car> = None;
+
+    let mut cool_down_up = Instant::now();
+    let mut cool_down_down = Instant::now();
+    let mut cool_down_left = Instant::now();
+    let mut cool_down_right = Instant::now();
+    let mut cool_down_r = Instant::now();
+
     'my_loop: loop {
         clear_background(BLACK);
 
@@ -41,14 +75,127 @@ async fn main() {
         draw_line_ver(width + 100., height);
         draw_line_ver(width - 100., height);
 
+        //ligths
+        for ele in &lights {
+            draw_rectangle_lines(ele.pos.0, ele.pos.1, 50., 50., 2., ele.color);
+        }
+
         // cars
         for ele in &mut cars {
             draw_rectangle(ele.pos.0, ele.pos.1, 50., 50., ele.color);
+
             match ele.dir {
-                KeyCode::Up => ele.pos.1 -= 2.,
-                KeyCode::Down => ele.pos.1 += 2.,
-                KeyCode::Left => ele.pos.0 -= 2.,
-                _ => ele.pos.0 += 2.,
+                KeyCode::Up => {
+                    // println!("stack => {:?} | pos=> {}", stack.len(), ele.pos.1);
+                    if lights[0].color == RED && ele.pos.1 != 450. {
+                        if stack_up.is_none() || stack_up.clone().unwrap().pos.1 + 60. < ele.pos.1 {
+                            ele.pos.1 -= 2.;
+                            match ele.color {
+                                GREEN if ele.pos.1 == 400. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Right;
+                                    ele.is_moved = true;
+                                }
+                                YELLOW if ele.pos.1 == 350. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Left;
+                                    ele.is_moved = true;
+                                }
+                                _ => {}
+                            };
+                        } else {
+                            stack_up = Some(ele.clone())
+                        }
+                    } else {
+                        if stack_up.is_none() {
+                            stack_up = Some(ele.clone())
+                        }
+                    }
+                }
+                KeyCode::Down => {
+                    if !stack_down.is_none() {
+                        println!(
+                            "stack => {:?} | pos=> {}",
+                            stack_down.clone().unwrap().pos.1,
+                            ele.pos.1
+                        );
+                    }
+                    if lights[1].color == RED && ele.pos.1 != 300. {
+                        if stack_down.is_none()
+                            || stack_down.clone().unwrap().pos.1 > ele.pos.1 + 60.
+                        {
+                            ele.pos.1 += 2.;
+                            match ele.color {
+                                GREEN if ele.pos.1 == 350. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Left;
+                                    ele.is_moved = true;
+                                }
+                                YELLOW if ele.pos.1 == 400. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Right;
+                                    ele.is_moved = true;
+                                }
+                                _ => {}
+                            };
+                        } else {
+                            stack_down = Some(ele.clone());
+                        }
+                    } else {
+                        if stack_down.is_none() {
+                            stack_down = Some(ele.clone());
+                        }
+                    }
+                }
+                KeyCode::Left => {
+                    if lights[2].color == RED && ele.pos.0 != 450. {
+                        if stack_left.is_none()
+                            || stack_left.clone().unwrap().pos.0 + 60. < ele.pos.0
+                        {
+                            ele.pos.0 -= 2.;
+                            match ele.color {
+                                YELLOW if ele.pos.0 == 350. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Down;
+                                    ele.is_moved = true;
+                                }
+                                GREEN if ele.pos.0 == 400. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Up;
+                                    ele.is_moved = true;
+                                }
+                                _ => {}
+                            };
+                        } else {
+                            stack_left = Some(ele.clone());
+                        }
+                    } else {
+                        if stack_left.is_none() {
+                            stack_left = Some(ele.clone());
+                        }
+                    }
+                }
+                KeyCode::Right => {
+                    if lights[2].color == RED && ele.pos.0 != 300. {
+                        if stack_right.is_none()
+                            || stack_right.clone().unwrap().pos.0 > ele.pos.0 + 60.
+                        {
+                            ele.pos.0 += 2.;
+                            match ele.color {
+                                GREEN if ele.pos.0 == 350. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Down;
+                                    ele.is_moved = true;
+                                }
+                                YELLOW if ele.pos.0 == 400. && !ele.is_moved => {
+                                    ele.dir = KeyCode::Up;
+                                    ele.is_moved = true;
+                                }
+                                _ => {}
+                            };
+                        } else {
+                            stack_right = Some(ele.clone());
+                        }
+                    } else {
+                        if stack_right.is_none() {
+                            stack_right = Some(ele.clone());
+                        }
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -58,30 +205,44 @@ async fn main() {
                     break 'my_loop;
                 }
                 KeyCode::Up => {
-                    let mut car = instans_car[0].clone();
-                    car.color = Car::random_color();
-                    cars.push(car);
-                    
+                    if cool_down_up.elapsed() > Duration::from_secs_f32(0.6) {
+                        let mut car = instans_car[0].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_up = Instant::now();
+                    }
                 }
                 KeyCode::Down => {
-                    let mut car = instans_car[1].clone();
-                    car.color = Car::random_color();
-                    cars.push(car);
+                    if cool_down_down.elapsed() > Duration::from_secs_f32(0.6) {
+                        let mut car = instans_car[1].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_down = Instant::now();
+                    }
                 }
                 KeyCode::Left => {
-                    let mut car = instans_car[2].clone();
-                    car.color = Car::random_color();
-                    cars.push(car);
+                    if cool_down_left.elapsed() > Duration::from_secs_f32(0.6) {
+                        let mut car = instans_car[2].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_left = Instant::now();
+                    }
                 }
                 KeyCode::Right => {
-                    let mut car = instans_car[3].clone();
-                    car.color = Car::random_color();
-                    cars.push(car);
+                    if cool_down_right.elapsed() > Duration::from_secs_f32(0.6) {
+                        let mut car = instans_car[3].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_right = Instant::now();
+                    }
                 }
                 KeyCode::R => {
-                    let mut car = instans_car[random_range(0..4)].clone();
-                    car.color = Car::random_color();
-                    cars.push(car);
+                    if cool_down_r.elapsed() > Duration::from_secs_f32(0.6) {
+                        let mut car = instans_car[random_range(0..4)].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_r = Instant::now()
+                    }
                 }
                 _ => {}
             }
@@ -98,4 +259,3 @@ fn draw_line_ori(width: f32, hight: f32) {
 fn draw_line_ver(width: f32, hight: f32) {
     draw_line(width / 2., 0., width / 2., hight, 1., WHITE);
 }
-
