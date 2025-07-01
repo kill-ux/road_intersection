@@ -87,6 +87,9 @@ async fn main() {
             lights[last_green.1].color = GREEN;
             match last_green.1 {
                 0 => stack_up = None,
+                1 => stack_down = None,
+                3 => stack_left = None,
+                4 => stack_right = None,
                 _ => {}
             }
         }
@@ -103,7 +106,7 @@ async fn main() {
             match ele.dir {
                 KeyCode::Up => {
                     if lights[0].color != RED
-                        || lights[0].color == RED && ele.pos.1 != 450. && ele.pos.0 != 450.
+                        || lights[0].color == RED && !(ele.pos.1 == 450. && ele.pos.0 == 400.)
                     {
                         if stack_up.is_none() || stack_up.clone().unwrap().pos.1 + 60. < ele.pos.1 {
                             ele.pos.1 -= 2.;
@@ -128,7 +131,9 @@ async fn main() {
                     }
                 }
                 KeyCode::Down => {
-                    if lights[1].color == RED && ele.pos.1 != 300. && ele.pos.0 != 300. {
+                    if lights[1].color != RED
+                        || lights[1].color == RED && !(ele.pos.1 == 300. && ele.pos.0 == 350.)
+                    {
                         if stack_down.is_none()
                             || stack_down.clone().unwrap().pos.1 > ele.pos.1 + 60.
                         {
@@ -154,7 +159,9 @@ async fn main() {
                     }
                 }
                 KeyCode::Left => {
-                    if lights[2].color == RED && ele.pos.0 != 450. && ele.pos.1 != 300. {
+                    if lights[3].color != RED
+                        || lights[3].color == RED && !(ele.pos.0 == 450. && ele.pos.1 == 350.)
+                    {
                         if stack_left.is_none()
                             || stack_left.clone().unwrap().pos.0 + 60. < ele.pos.0
                         {
@@ -180,7 +187,9 @@ async fn main() {
                     }
                 }
                 KeyCode::Right => {
-                    if lights[2].color == RED && ele.pos.0 != 300. && ele.pos.1 != 450. {
+                    if lights[2].color != RED
+                        || lights[2].color == RED && ele.pos.0 != 300. && ele.pos.1 != 450.
+                    {
                         if stack_right.is_none()
                             || stack_right.clone().unwrap().pos.0 > ele.pos.0 + 60.
                         {
