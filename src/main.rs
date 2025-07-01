@@ -125,9 +125,9 @@ async fn main() {
                             stack_up = Some(ele.clone())
                         }
                     } else {
-                        if stack_up.is_none() {
+                        // if stack_up.is_none() {
                             stack_up = Some(ele.clone())
-                        }
+                        // }
                     }
                 }
                 KeyCode::Down => {
@@ -153,9 +153,9 @@ async fn main() {
                             stack_down = Some(ele.clone());
                         }
                     } else {
-                        if stack_down.is_none() {
+                        // if stack_down.is_none() {
                             stack_down = Some(ele.clone());
-                        }
+                        // }
                     }
                 }
                 KeyCode::Left => {
@@ -181,9 +181,9 @@ async fn main() {
                             stack_left = Some(ele.clone());
                         }
                     } else {
-                        if stack_left.is_none() {
+                        // if stack_left.is_none() {
                             stack_left = Some(ele.clone());
-                        }
+                        // }
                     }
                 }
                 KeyCode::Right => {
@@ -209,9 +209,9 @@ async fn main() {
                             stack_right = Some(ele.clone());
                         }
                     } else {
-                        if stack_right.is_none() {
+                        // if stack_right.is_none() {
                             stack_right = Some(ele.clone());
-                        }
+                        // }
                     }
                 }
                 _ => {}
