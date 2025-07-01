@@ -98,3 +98,4 @@ fn draw_line_ori(width: f32, hight: f32) {
 fn draw_line_ver(width: f32, hight: f32) {
     draw_line(width / 2., 0., width / 2., hight, 1., WHITE);
 }
+
