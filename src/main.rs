@@ -34,7 +34,9 @@ async fn main() {
         Car::new(KeyCode::Right, (-50., width / 2.)),
     ];
 
-    let lights = [
+    let mut last_green = (Instant::now(), 0);
+
+    let mut lights = [
         Lights {
             pos: (450., 450.),
             color: RED,
@@ -75,6 +77,20 @@ async fn main() {
         draw_line_ver(width + 100., height);
         draw_line_ver(width - 100., height);
 
+        if last_green.0.elapsed() > Duration::from_secs(2) {
+            lights[last_green.1].color = RED;
+            last_green.0 = Instant::now();
+            last_green.1 += 1;
+            if last_green.1 == 4 {
+                last_green.1 = 0;
+            }
+            lights[last_green.1].color = GREEN;
+            match last_green.1 {
+                0 => stack_up = None,
+                _ => {}
+            }
+        }
+
         //ligths
         for ele in &lights {
             draw_rectangle_lines(ele.pos.0, ele.pos.1, 50., 50., 2., ele.color);
@@ -86,8 +102,9 @@ async fn main() {
 
             match ele.dir {
                 KeyCode::Up => {
-                    // println!("stack => {:?} | pos=> {}", stack.len(), ele.pos.1);
-                    if lights[0].color == RED && ele.pos.1 != 450. {
+                    if lights[0].color != RED
+                        || lights[0].color == RED && ele.pos.1 != 450. && ele.pos.0 != 450.
+                    {
                         if stack_up.is_none() || stack_up.clone().unwrap().pos.1 + 60. < ele.pos.1 {
                             ele.pos.1 -= 2.;
                             match ele.color {
@@ -111,14 +128,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Down => {
-                    if !stack_down.is_none() {
-                        println!(
-                            "stack => {:?} | pos=> {}",
-                            stack_down.clone().unwrap().pos.1,
-                            ele.pos.1
-                        );
-                    }
-                    if lights[1].color == RED && ele.pos.1 != 300. {
+                    if lights[1].color == RED && ele.pos.1 != 300. && ele.pos.0 != 300. {
                         if stack_down.is_none()
                             || stack_down.clone().unwrap().pos.1 > ele.pos.1 + 60.
                         {
@@ -144,7 +154,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Left => {
-                    if lights[2].color == RED && ele.pos.0 != 450. {
+                    if lights[2].color == RED && ele.pos.0 != 450. && ele.pos.1 != 300. {
                         if stack_left.is_none()
                             || stack_left.clone().unwrap().pos.0 + 60. < ele.pos.0
                         {
@@ -170,7 +180,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Right => {
-                    if lights[2].color == RED && ele.pos.0 != 300. {
+                    if lights[2].color == RED && ele.pos.0 != 300. && ele.pos.1 != 450. {
                         if stack_right.is_none()
                             || stack_right.clone().unwrap().pos.0 > ele.pos.0 + 60.
                         {
@@ -213,7 +223,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Down => {
-                    if cool_down_down.elapsed() > Duration::from_secs_f32(0.6) {
+                    if cool_down_down.elapsed() > Duration::from_secs_f32(0.8) {
                         let mut car = instans_car[1].clone();
                         car.color = Car::random_color();
                         cars.push(car);
@@ -221,7 +231,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Left => {
-                    if cool_down_left.elapsed() > Duration::from_secs_f32(0.6) {
+                    if cool_down_left.elapsed() > Duration::from_secs_f32(0.8) {
                         let mut car = instans_car[2].clone();
                         car.color = Car::random_color();
                         cars.push(car);
@@ -229,7 +239,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Right => {
-                    if cool_down_right.elapsed() > Duration::from_secs_f32(0.6) {
+                    if cool_down_right.elapsed() > Duration::from_secs_f32(0.8) {
                         let mut car = instans_car[3].clone();
                         car.color = Car::random_color();
                         cars.push(car);
@@ -237,7 +247,7 @@ async fn main() {
                     }
                 }
                 KeyCode::R => {
-                    if cool_down_r.elapsed() > Duration::from_secs_f32(0.6) {
+                    if cool_down_r.elapsed() > Duration::from_secs_f32(0.8) {
                         let mut car = instans_car[random_range(0..4)].clone();
                         car.color = Car::random_color();
                         cars.push(car);
