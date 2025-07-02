@@ -412,11 +412,3 @@ async fn main() {
         next_frame().await
     }
 }
-
-fn draw_line_ori(width: f32, hight: f32) {
-    draw_line(0., hight / 2., width, hight / 2., 1., WHITE);
-}
-
-fn draw_line_ver(width: f32, hight: f32) {
-    draw_line(width / 2., 0., width / 2., hight, 1., WHITE);
-}
