@@ -34,7 +34,7 @@ async fn main() {
         Car::new(KeyCode::Right, (-50., width / 2.)),
     ];
 
-    let mut last_green = (Instant::now(), 0);
+    let mut last_green = (Instant::now(), 0, Instant::now());
 
     let mut lights = [
         Lights {
@@ -64,6 +64,8 @@ async fn main() {
     let mut cool_down_down = Instant::now();
     let mut cool_down_left = Instant::now();
     let mut cool_down_right = Instant::now();
+
+    // let mut stop: bool = false;
     // let mut cool_down_r = Instant::now();
 
     'my_loop: loop {
@@ -80,17 +82,21 @@ async fn main() {
         if last_green.0.elapsed() > Duration::from_secs(2) {
             lights[last_green.1].color = RED;
             last_green.0 = Instant::now();
-            last_green.1 += 1;
-            if last_green.1 == 4 {
-                last_green.1 = 0;
-            }
-            lights[last_green.1].color = GREEN;
-            match last_green.1 {
-                0 => stack_up = None,
-                1 => stack_down = None,
-                3 => stack_left = None,
-                4 => stack_right = None,
-                _ => {}
+
+            if last_green.2.elapsed() > Duration::from_secs(4) {
+                last_green.2 = Instant::now();
+                last_green.1 += 1;
+                if last_green.1 == 4 {
+                    last_green.1 = 0;
+                }
+                lights[last_green.1].color = GREEN;
+                match last_green.1 {
+                    0 => stack_up = None,
+                    1 => stack_down = None,
+                    2 => stack_right = None,
+                    3 => stack_left = None,
+                    _ => {}
+                }
             }
         }
 
@@ -103,13 +109,24 @@ async fn main() {
         for ele in &mut cars {
             draw_rectangle(ele.pos.0, ele.pos.1, 50., 50., ele.color);
 
+            // chech collesion
+
+            // if ele.pos.0 > 350. && ele.pos.0 < 450. && ele.pos.1 > 350. && ele.pos.1 < 450. {
+            //     ele.stop = true;
+            // }
+
+            //
+
             match ele.dir {
                 KeyCode::Up => {
                     if lights[0].color != RED
                         || lights[0].color == RED && !(ele.pos.1 == 450. && ele.pos.0 == 400.)
                     {
-                        if stack_up.is_none() || stack_up.clone().unwrap().pos.1 + 60. < ele.pos.1 {
-                            ele.pos.1 -= 2.;
+                        if stack_up.is_none()
+                            || ele.pos.1 < 450.
+                            || stack_up.clone().unwrap().pos.1 + 60. < ele.pos.1
+                        {
+                            ele.pos.1 -= 1.;
                             match ele.color {
                                 GREEN if ele.pos.1 == 400. && !ele.is_moved => {
                                     ele.dir = KeyCode::Right;
@@ -133,9 +150,10 @@ async fn main() {
                         || lights[1].color == RED && !(ele.pos.1 == 300. && ele.pos.0 == 350.)
                     {
                         if stack_down.is_none()
+                            || ele.pos.1 > 300.
                             || stack_down.clone().unwrap().pos.1 > ele.pos.1 + 60.
                         {
-                            ele.pos.1 += 2.;
+                            ele.pos.1 += 1.;
                             match ele.color {
                                 GREEN if ele.pos.1 == 350. && !ele.is_moved => {
                                     ele.dir = KeyCode::Left;
@@ -159,9 +177,10 @@ async fn main() {
                         || lights[3].color == RED && !(ele.pos.0 == 450. && ele.pos.1 == 350.)
                     {
                         if stack_left.is_none()
+                            || ele.pos.0 < 450.
                             || stack_left.clone().unwrap().pos.0 + 60. < ele.pos.0
                         {
-                            ele.pos.0 -= 2.;
+                            ele.pos.0 -= 1.;
                             match ele.color {
                                 YELLOW if ele.pos.0 == 350. && !ele.is_moved => {
                                     ele.dir = KeyCode::Down;
@@ -185,9 +204,10 @@ async fn main() {
                         || lights[2].color == RED && ele.pos.0 != 300. && ele.pos.1 != 450.
                     {
                         if stack_right.is_none()
+                            || ele.pos.0 > 300.
                             || stack_right.clone().unwrap().pos.0 > ele.pos.0 + 60.
                         {
-                            ele.pos.0 += 2.;
+                            ele.pos.0 += 1.;
                             match ele.color {
                                 GREEN if ele.pos.0 == 350. && !ele.is_moved => {
                                     ele.dir = KeyCode::Down;
@@ -213,12 +233,11 @@ async fn main() {
         let mut match_keys = |key: KeyCode| {
             match key {
                 KeyCode::Up => {
-                    if cool_down_up.elapsed() > Duration::from_secs_f32(0.6)
+                    if cool_down_up.elapsed() > Duration::from_secs_f32(1.)
                         && (stack_up.is_none()
-                            || stack_up.as_ref().is_some_and(|car| {
-                                println!("{}", car.pos.1);
-                                car.pos.1 + 100. < height
-                            }))
+                            || stack_up
+                                .as_ref()
+                                .is_some_and(|car| car.pos.1 + 100. < height))
                     {
                         let mut car = instans_car[0].clone();
                         car.color = Car::random_color();
@@ -227,7 +246,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Down => {
-                    if cool_down_down.elapsed() > Duration::from_secs_f32(0.8)
+                    if cool_down_down.elapsed() > Duration::from_secs_f32(1.)
                         && (stack_down.is_none()
                             || stack_down.as_ref().is_some_and(|car| car.pos.1 > 100.))
                     {
@@ -238,7 +257,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Left => {
-                    if cool_down_left.elapsed() > Duration::from_secs_f32(0.8)
+                    if cool_down_left.elapsed() > Duration::from_secs_f32(1.)
                         && (stack_left.is_none()
                             || stack_left
                                 .as_ref()
@@ -251,7 +270,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Right => {
-                    if cool_down_right.elapsed() > Duration::from_secs_f32(0.8)
+                    if cool_down_right.elapsed() > Duration::from_secs_f32(1.)
                         && (stack_right.is_none()
                             || stack_right.as_ref().is_some_and(|car| car.pos.0 > 100.))
                     {
