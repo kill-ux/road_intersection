@@ -215,9 +215,10 @@ async fn main() {
                 KeyCode::Up => {
                     if cool_down_up.elapsed() > Duration::from_secs_f32(0.6)
                         && (stack_up.is_none()
-                            || stack_up
-                                .as_ref()
-                                .is_some_and(|car| car.pos.1 + 100. < height))
+                            || stack_up.as_ref().is_some_and(|car| {
+                                println!("{}", car.pos.1);
+                                car.pos.1 + 100. < height
+                            }))
                     {
                         let mut car = instans_car[0].clone();
                         car.color = Car::random_color();
@@ -228,7 +229,7 @@ async fn main() {
                 KeyCode::Down => {
                     if cool_down_down.elapsed() > Duration::from_secs_f32(0.8)
                         && (stack_down.is_none()
-                            || stack_down.as_ref().is_some_and(|car| car.pos.1 > 60.))
+                            || stack_down.as_ref().is_some_and(|car| car.pos.1 > 100.))
                     {
                         let mut car = instans_car[1].clone();
                         car.color = Car::random_color();
@@ -241,7 +242,7 @@ async fn main() {
                         && (stack_left.is_none()
                             || stack_left
                                 .as_ref()
-                                .is_some_and(|car| car.pos.0 + 60. < width))
+                                .is_some_and(|car| car.pos.0 + 100. < width))
                     {
                         let mut car = instans_car[2].clone();
                         car.color = Car::random_color();
@@ -252,7 +253,7 @@ async fn main() {
                 KeyCode::Right => {
                     if cool_down_right.elapsed() > Duration::from_secs_f32(0.8)
                         && (stack_right.is_none()
-                            || stack_right.as_ref().is_some_and(|car| car.pos.0 > 60.))
+                            || stack_right.as_ref().is_some_and(|car| car.pos.0 > 100.))
                     {
                         let mut car = instans_car[3].clone();
                         car.color = Car::random_color();
@@ -273,9 +274,9 @@ async fn main() {
                     match_keys(key);
                 }
                 KeyCode::R => {
-                    // let key_r = [KeyCode::Up, KeyCode::Down, KeyCode::Left, KeyCode::Right]
-                    //     [random_range(0..4)];
-                    match_keys(KeyCode::Up);
+                    let key_r = [KeyCode::Up, KeyCode::Down, KeyCode::Left, KeyCode::Right]
+                        [random_range(0..4)];
+                    match_keys(key_r);
                 }
                 _ => {}
             }
