@@ -1,14 +1,17 @@
+use std::cell::RefCell;
+
 // use std::time::Instant;
 use ::rand::*;
 pub use macroquad::prelude::*;
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Car {
     pub dir: KeyCode,
     pub pos: (f32, f32),
     pub color: Color,
     pub is_moved: bool,
     pub stop: bool,
+    pub in_intersection: bool,
 }
 
 pub struct Lights {
@@ -29,6 +32,7 @@ impl Car {
             color,
             is_moved: false,
             stop: false,
+            in_intersection: false,
         }
     }
     pub fn random_color() -> Color {
