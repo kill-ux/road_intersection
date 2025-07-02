@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
 
 use ::rand::*;
 // use macroquad::prelude::*;
@@ -57,11 +60,11 @@ async fn main() {
     let mut stack_left: Option<Car> = None;
     let mut stack_right: Option<Car> = None;
 
-    let mut cool_down_up = None; // Option<f32>
-    // let mut cool_down_down = None;
-    // let mut cool_down_left = None;
-    // let mut cool_down_right = None;
-    // let mut cool_down_r = None;
+    let mut cool_down_up = Instant::now();
+    let mut cool_down_down = Instant::now();
+    let mut cool_down_left = Instant::now();
+    let mut cool_down_right = Instant::now();
+    // let mut cool_down_r = Instant::now();
 
     'my_loop: loop {
         clear_background(BLACK);
@@ -207,52 +210,72 @@ async fn main() {
             }
         }
 
+        let mut match_keys = |key: KeyCode| {
+            match key {
+                KeyCode::Up => {
+                    if cool_down_up.elapsed() > Duration::from_secs_f32(0.6)
+                        && (stack_up.is_none()
+                            || stack_up
+                                .as_ref()
+                                .is_some_and(|car| car.pos.1 + 100. < height))
+                    {
+                        let mut car = instans_car[0].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_up = Instant::now();
+                    }
+                }
+                KeyCode::Down => {
+                    if cool_down_down.elapsed() > Duration::from_secs_f32(0.8)
+                        && (stack_down.is_none()
+                            || stack_down.as_ref().is_some_and(|car| car.pos.1 > 60.))
+                    {
+                        let mut car = instans_car[1].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_down = Instant::now();
+                    }
+                }
+                KeyCode::Left => {
+                    if cool_down_left.elapsed() > Duration::from_secs_f32(0.8)
+                        && (stack_left.is_none()
+                            || stack_left
+                                .as_ref()
+                                .is_some_and(|car| car.pos.0 + 60. < width))
+                    {
+                        let mut car = instans_car[2].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_left = Instant::now();
+                    }
+                }
+                KeyCode::Right => {
+                    if cool_down_right.elapsed() > Duration::from_secs_f32(0.8)
+                        && (stack_right.is_none()
+                            || stack_right.as_ref().is_some_and(|car| car.pos.0 > 60.))
+                    {
+                        let mut car = instans_car[3].clone();
+                        car.color = Car::random_color();
+                        cars.push(car);
+                        cool_down_right = Instant::now();
+                    }
+                }
+                _ => {}
+            };
+        };
+
         for key in get_keys_pressed() {
             match key {
                 KeyCode::Escape => {
                     break 'my_loop;
                 }
-                KeyCode::Up => {
-                    println!("{}", cool_down_up.clone().take().unwrap());
-                    if cool_down_up.is_none() || cool_down_up.take().unwrap() + 60. < height {
-                        let mut car = instans_car[0].clone();
-                        car.color = Car::random_color();
-                        cool_down_up = Some(car.pos.1);
-                        cars.push(car);
-                        // cool_down_up = Instant::now();
-                    }
-                }
-                KeyCode::Down => {
-                    // if cool_down_down.elapsed() > Duration::from_secs_f32(0.8) {
-                    //     let mut car = instans_car[1].clone();
-                    //     car.color = Car::random_color();
-                    //     cars.push(car);
-                    //     cool_down_down = Instant::now();
-                    // }
-                }
-                KeyCode::Left => {
-                    // if cool_down_left.elapsed() > Duration::from_secs_f32(0.8) {
-                    //     let mut car = instans_car[2].clone();
-                    //     car.color = Car::random_color();
-                    //     cars.push(car);
-                    //     cool_down_left = Instant::now();
-                    // }
-                }
-                KeyCode::Right => {
-                    // if cool_down_right.elapsed() > Duration::from_secs_f32(0.8) {
-                    //     let mut car = instans_car[3].clone();
-                    //     car.color = Car::random_color();
-                    //     cars.push(car);
-                    //     cool_down_right = Instant::now();
-                    // }
+                KeyCode::Up | KeyCode::Down | KeyCode::Left | KeyCode::Right => {
+                    match_keys(key);
                 }
                 KeyCode::R => {
-                    // if cool_down_r.elapsed() > Duration::from_secs_f32(0.8) {
-                    //     let mut car = instans_car[random_range(0..4)].clone();
-                    //     car.color = Car::random_color();
-                    //     cars.push(car);
-                    //     cool_down_r = Instant::now()
-                    // }
+                    // let key_r = [KeyCode::Up, KeyCode::Down, KeyCode::Left, KeyCode::Right]
+                    //     [random_range(0..4)];
+                    match_keys(KeyCode::Up);
                 }
                 _ => {}
             }
