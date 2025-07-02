@@ -1,7 +1,4 @@
-use std::{
-    thread,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use ::rand::*;
 // use macroquad::prelude::*;
