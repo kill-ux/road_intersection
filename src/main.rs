@@ -328,13 +328,14 @@ async fn main() {
             }
         }
 
-        
 
-          // Remove cars that have gone off screen
+        // Remove cars that have gone off screen
         cars.retain(|car_cel| {
             if let Ok(car) = car_cel.try_borrow() {
-                car.pos.0 > -100. && car.pos.0 < width + 100. && 
-                car.pos.1 > -100. && car.pos.1 < height + 100.
+                car.pos.0 > -100.
+                    && car.pos.0 < width + 100.
+                    && car.pos.1 > -100.
+                    && car.pos.1 < height + 100.
             } else {
                 true
             }
@@ -407,8 +408,6 @@ async fn main() {
                 _ => {}
             }
         }
-
-        
 
         next_frame().await
     }
