@@ -57,6 +57,8 @@ async fn main() {
     let mut stack_left: Option<Car> = None;
     let mut stack_right: Option<Car> = None;
 
+    // let mut queue_up: Option<usize> = None;
+
     let mut cool_down_up = Instant::now();
     let mut cool_down_down = Instant::now();
     let mut cool_down_left = Instant::now();
@@ -103,7 +105,7 @@ async fn main() {
         }
 
         // cars
-        for ele in &mut cars {
+        for (i, ele) in &mut cars.iter_mut().enumerate() {
             draw_rectangle(ele.pos.0, ele.pos.1, 50., 50., ele.color);
 
             // chech collesion
@@ -121,8 +123,13 @@ async fn main() {
                     {
                         if stack_up.is_none()
                             || ele.pos.1 < 450.
-                            || stack_up.clone().unwrap().pos.1 + 60. < ele.pos.1
+                            || stack_up.clone().unwrap().pos.1 + 100. < ele.pos.1
                         {
+                            // if queue_up.is_none()
+                            //     || queue_up
+                            //         .is_some_and(|index| ele.dir == KeyCode::Up && index == i)
+                            // {
+                            // queue_up = Some(i);
                             ele.pos.1 -= 1.;
                             match ele.color {
                                 GREEN if ele.pos.1 == 400. && !ele.is_moved => {
@@ -135,6 +142,7 @@ async fn main() {
                                 }
                                 _ => {}
                             };
+                            // }
                         } else {
                             stack_up = Some(ele.clone())
                         }
@@ -230,7 +238,7 @@ async fn main() {
         let mut match_keys = |key: KeyCode| {
             match key {
                 KeyCode::Up => {
-                    if cool_down_up.elapsed() > Duration::from_secs_f32(1.)
+                    if cool_down_up.elapsed() > Duration::from_secs_f32(2.)
                         && (stack_up.is_none()
                             || stack_up
                                 .as_ref()
