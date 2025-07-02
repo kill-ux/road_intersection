@@ -21,6 +21,38 @@ fn window_conf() -> Conf {
     }
 }
 
+fn draw_roads() {
+    let center = 400.0;
+    let lane_width = 60.0;
+
+    // Compute positions based on center and lane width
+    let left = center - lane_width;
+    let right = center + lane_width;
+    let top = center - lane_width;
+    let bottom = center + lane_width;
+
+    let road_lines = [
+        // Horizontal roads
+        (0.0, top, left, top, LIGHTGRAY),          // East top
+        (0.0, center, left, center, DARKGRAY),     // East middle
+        (0.0, bottom, left, bottom, LIGHTGRAY),    // East bottom
+        (right, top, 800.0, top, LIGHTGRAY),       // West top
+        (right, center, 800.0, center, DARKGRAY),  // West middle
+        (right, bottom, 800.0, bottom, LIGHTGRAY), // West bottom
+        // Vertical roads
+        (top, 0.0, top, left, LIGHTGRAY),          // North left
+        (center, 0.0, center, left, DARKGRAY),     // North middle
+        (bottom, 0.0, bottom, left, LIGHTGRAY),    // North right
+        (top, right, top, 800.0, LIGHTGRAY),       // South left
+        (center, right, center, 800.0, DARKGRAY),  // South middle
+        (bottom, right, bottom, 800.0, LIGHTGRAY), // South right
+    ];
+
+    for (x1, y1, x2, y2, color) in road_lines {
+        draw_line(x1, y1, x2, y2, 1.0, color);
+    }
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut cars: Vec<RefCell<Car>> = vec![];
@@ -33,22 +65,22 @@ async fn main() {
         Car::new(KeyCode::Right, (-50., width / 2.)),
     ];
 
-    let mut last_green = (Instant::now(), 0, Instant::now());
+    let mut last_green = (Instant::now(), 0);
     let mut lights = [
         Lights {
-            pos: (450., 450.),
+            pos: (460., 460.),
+            color: GREEN,
+        },
+        Lights {
+            pos: (340., 340.),
             color: RED,
         },
         Lights {
-            pos: (300., 300.),
+            pos: (340., 460.),
             color: RED,
         },
         Lights {
-            pos: (300., 450.),
-            color: RED,
-        },
-        Lights {
-            pos: (450., 300.),
+            pos: (460., 340.),
             color: RED,
         },
     ];
@@ -63,50 +95,58 @@ async fn main() {
     let mut cool_down_left = Instant::now();
     let mut cool_down_right = Instant::now();
 
+    let mut time_up = (false, Instant::now());
+    let mut time_down = (false, Instant::now());
+    let mut time_left: (bool, Instant) = (false, Instant::now());
+    let mut time_right = (false, Instant::now());
+
     'my_loop: loop {
         clear_background(BLACK);
 
         // Draw borders and lights (unchanged)
-        draw_line_ori(width, height);
-        draw_line_ori(width, height + 100.);
-        draw_line_ori(width, height - 100.);
-        draw_line_ver(width, height);
-        draw_line_ver(width + 100., height);
-        draw_line_ver(width - 100., height);
+        // draw_line_ori(width, height);
+        // draw_line_ori(width, height);
+        // draw_line(0., height / 2., width, height / 2., 1., WHITE);
 
-        if last_green.0.elapsed() > Duration::from_secs(3) {
+        // draw_line_ori(width, height + 100.);
+        // draw_line_ori(width, height - 100.);
+        // draw_line_ver(width, height);
+        // draw_line_ver(width + 100., height);
+        // draw_line_ver(width - 100., height);
+        draw_roads();
+
+        if last_green.0.elapsed() > Duration::from_secs(5) {
             lights[last_green.1].color = RED;
             last_green.0 = Instant::now();
 
-            if last_green.2.elapsed() > Duration::from_secs_f32(3.3) {
-                last_green.2 = Instant::now();
-                last_green.1 = (last_green.1 + 1) % 4;
-                lights[last_green.1].color = GREEN;
-                match last_green.1 {
-                    0 => stack_up = None,
-                    1 => stack_down = None,
-                    2 => stack_right = None,
-                    3 => stack_left = None,
-                    _ => {}
-                }
+            last_green.1 = (last_green.1 + 1) % 4;
+            lights[last_green.1].color = GREEN;
+            match last_green.1 {
+                0 => stack_up = None,
+                1 => stack_down = None,
+                2 => stack_right = None,
+                3 => stack_left = None,
+                _ => {}
             }
         }
 
         for ele in &lights {
-            draw_rectangle_lines(ele.pos.0, ele.pos.1, 50., 50., 2., ele.color);
+            draw_circle_lines(ele.pos.0, ele.pos.1, 8., 5., ele.color);
+            draw_circle(ele.pos.0, ele.pos.1, 8., BLACK);
         }
 
         // Process cars
         for car_cell in &cars {
             let mut car = car_cell.borrow_mut();
-            draw_rectangle(car.pos.0, car.pos.1, 50., 50., car.color);
+            // draw_rectangle(car.pos.0, car.pos.1, 50., 50., BLACK);
+            draw_rectangle(car.pos.0 + 10., car.pos.1 + 10., 30., 30., car.color);
 
             //
 
             if (lights[0].color == GREEN && car.pos.1 == 450. && car.pos.0 == 400.)
                 || (lights[1].color == GREEN && car.pos.1 == 300. && car.pos.0 == 350.)
                 || (lights[3].color == GREEN && car.pos.0 == 450. && car.pos.1 == 350.)
-                || (lights[2].color == GREEN && car.pos.0 == 300. && car.pos.1 == 450.)
+                || (lights[2].color == GREEN && car.pos.0 == 300. && car.pos.1 == 400.)
             {
                 let mut stop: bool = false;
                 for car_cell2 in &cars {
@@ -114,9 +154,9 @@ async fn main() {
                         continue; // Skip the same car
                     }
                     let car2 = car_cell2.borrow();
-                    if car2.pos.0 > 350.
+                    if car2.pos.0 > 300.
                         && car2.pos.0 < 450.
-                        && car2.pos.1 > 350.
+                        && car2.pos.1 > 300.
                         && car2.pos.1 < 450.
                     {
                         stop = true;
@@ -124,14 +164,55 @@ async fn main() {
                 }
                 if stop {
                     match car.dir {
-                        KeyCode::Up => stack_up = Some(car.clone()),
-                        KeyCode::Down => stack_down = Some(car.clone()),
-                        KeyCode::Left => stack_left = Some(car.clone()),
-                        KeyCode::Right => stack_right = Some(car.clone()),
+                        KeyCode::Up => {
+                            stack_up = {
+                                time_up = (true, Instant::now());
+                                Some(car.clone())
+                            }
+                        }
+                        KeyCode::Down => {
+                            stack_down = {
+                                time_down = (true, Instant::now());
+                                Some(car.clone())
+                            }
+                        }
+                        KeyCode::Left => {
+                            stack_left = {
+                                time_left = (true, Instant::now());
+                                Some(car.clone())
+                            }
+                        }
+                        KeyCode::Right => {
+                            stack_right = {
+                                time_right = (true, Instant::now());
+                                Some(car.clone())
+                            }
+                        }
                         _ => {}
                     }
                     continue;
                 }
+            }
+
+            if time_up.1.elapsed() > Duration::from_secs_f32(0.7) && time_up.0 {
+                stack_up = None;
+                time_up = (false, Instant::now());
+            }
+
+            if time_down.1.elapsed() > Duration::from_secs_f32(0.7) && time_down.0 {
+                stack_down = None;
+
+                time_down = (false, Instant::now());
+            }
+
+            if time_left.1.elapsed() > Duration::from_secs_f32(0.7) && time_left.0 {
+                stack_left = None;
+                time_left = (false, Instant::now());
+            }
+
+            if time_right.1.elapsed() > Duration::from_secs_f32(0.7) && time_right.0 {
+                stack_right = None;
+                time_right = (false, Instant::now());
             }
 
             match car.dir {
@@ -143,7 +224,7 @@ async fn main() {
                             || car.pos.1 < 450.
                             || stack_up.as_ref().unwrap().pos.1 + 60. < car.pos.1
                         {
-                            car.pos.1 -= 1.;
+                            car.pos.1 -= 2.;
                             match car.color {
                                 GREEN if car.pos.1 == 400. && !car.is_moved => {
                                     car.dir = KeyCode::Right;
@@ -170,7 +251,7 @@ async fn main() {
                             || car.pos.1 > 300.
                             || stack_down.as_ref().unwrap().pos.1 > car.pos.1 + 60.
                         {
-                            car.pos.1 += 1.;
+                            car.pos.1 += 2.;
                             match car.color {
                                 GREEN if car.pos.1 == 350. && !car.is_moved => {
                                     car.dir = KeyCode::Left;
@@ -197,7 +278,7 @@ async fn main() {
                             || car.pos.0 < 450.
                             || stack_left.as_ref().unwrap().pos.0 + 60. < car.pos.0
                         {
-                            car.pos.0 -= 1.;
+                            car.pos.0 -= 2.;
                             match car.color {
                                 YELLOW if car.pos.0 == 350. && !car.is_moved => {
                                     car.dir = KeyCode::Down;
@@ -218,13 +299,13 @@ async fn main() {
                 }
                 KeyCode::Right => {
                     if lights[2].color != RED
-                        || (lights[2].color == RED && !(car.pos.0 == 300. && car.pos.1 == 450.))
+                        || (lights[2].color == RED && car.pos.0 != 300. && car.pos.1 != 450.)
                     {
                         if stack_right.is_none()
                             || car.pos.0 > 300.
                             || stack_right.as_ref().unwrap().pos.0 > car.pos.0 + 60.
                         {
-                            car.pos.0 += 1.;
+                            car.pos.0 += 2.;
                             match car.color {
                                 GREEN if car.pos.0 == 350. && !car.is_moved => {
                                     car.dir = KeyCode::Down;
@@ -247,11 +328,23 @@ async fn main() {
             }
         }
 
+        
+
+          // Remove cars that have gone off screen
+        cars.retain(|car_cel| {
+            if let Ok(car) = car_cel.try_borrow() {
+                car.pos.0 > -100. && car.pos.0 < width + 100. && 
+                car.pos.1 > -100. && car.pos.1 < height + 100.
+            } else {
+                true
+            }
+        });
+
         // Key handling (unchanged)
         let mut match_keys = |key: KeyCode| {
             match key {
                 KeyCode::Up => {
-                    if cool_down_up.elapsed() > Duration::from_secs_f32(1.)
+                    if cool_down_up.elapsed() > Duration::from_secs_f32(0.6)
                         && (stack_up.is_none()
                             || stack_up
                                 .as_ref()
@@ -264,7 +357,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Down => {
-                    if cool_down_down.elapsed() > Duration::from_secs_f32(1.)
+                    if cool_down_down.elapsed() > Duration::from_secs_f32(0.6)
                         && (stack_down.is_none()
                             || stack_down.as_ref().is_some_and(|car| car.pos.1 > 60.))
                     {
@@ -275,7 +368,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Left => {
-                    if cool_down_left.elapsed() > Duration::from_secs_f32(1.)
+                    if cool_down_left.elapsed() > Duration::from_secs_f32(0.6)
                         && (stack_left.is_none()
                             || stack_left
                                 .as_ref()
@@ -288,7 +381,7 @@ async fn main() {
                     }
                 }
                 KeyCode::Right => {
-                    if cool_down_right.elapsed() > Duration::from_secs_f32(1.)
+                    if cool_down_right.elapsed() > Duration::from_secs_f32(0.6)
                         && (stack_right.is_none()
                             || stack_right.as_ref().is_some_and(|car| car.pos.0 > 60.))
                     {
@@ -314,6 +407,8 @@ async fn main() {
                 _ => {}
             }
         }
+
+        
 
         next_frame().await
     }

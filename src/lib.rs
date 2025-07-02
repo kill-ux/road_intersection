@@ -1,6 +1,4 @@
-use std::cell::RefCell;
 
-// use std::time::Instant;
 use ::rand::*;
 pub use macroquad::prelude::*;
 
